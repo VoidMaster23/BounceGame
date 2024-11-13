@@ -1,7 +1,7 @@
 # adaped from https://github.com/SasLuca/raylib-cmake-template/blob/master/CMakeLists.txt
 
 cmake_minimum_required(VERSION 3.15)
-project("TEMPLATE" CXX)
+project("BounceGame" CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
