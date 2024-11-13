@@ -6,5 +6,6 @@ bin/
 build/
 out/
 CMakeSettings.json
+assets/
 
 .DS_STORE
