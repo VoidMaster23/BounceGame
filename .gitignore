@@ -6,6 +6,6 @@ bin/
 build/
 out/
 CMakeSettings.json
-assets/
+assets/maps/tileset-resources
 
 .DS_STORE

@@ -1,6 +1,9 @@
 #include "raylib.h"
 #include <iostream>
 
+#define RAYLIB_TILESON_IMPLEMENTATION
+#include "raylib-tileson.h"
+
 struct InitParams
 {
     Vector2 ballPosition{};
@@ -15,8 +18,8 @@ Initializes the window as well  as basic start parameters for the game
 */
 InitParams init()
 {
-    const int screenWidth{800};
-    const int screenHeight{450};
+    const int screenWidth{1920};
+    const int screenHeight{1080};
 
     SetConfigFlags(FLAG_MSAA_4X_HINT); // Anti Aliasing to Smooth Edges
     InitWindow(screenWidth, screenHeight, "Bounce");
@@ -48,6 +51,12 @@ int main(void)
     bool isRising{false};
     bool isFalling{false};
     bool isOnGround{(initValues.ballPosition.y == (GetScreenHeight() - 4 * initValues.ballRadius))};
+
+    Map map = LoadTiled(ASSETS_PATH"maps/BounceMap.json");
+
+    if(!IsTiledReady(map)) {
+        return 1;
+    }
 
     // Main game loop
     while (!WindowShouldClose()) // Detect window close button or ESC key
@@ -98,7 +107,10 @@ int main(void)
         //-----------------------------------------------------
         BeginDrawing();
 
-        ClearBackground(GetColor(0x052c46ff));
+        ClearBackground(RAYWHITE);
+
+        // Draw the map
+        DrawTiled(map, 0, 0, WHITE);
 
         DrawCircleV(initValues.ballPosition, (float)initValues.ballRadius, MAROON);
 
@@ -110,7 +122,8 @@ int main(void)
 
     // De-Initialization
     //---------------------------------------------------------
-    CloseWindow();             // Close window and OpenGL context
+    UnloadMap(map);
+    CloseWindow(); // Close window and OpenGL context
     //------------------
     return 0;
 }
