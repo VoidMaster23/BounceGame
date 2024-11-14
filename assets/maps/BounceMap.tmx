@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="15" height="8" tilewidth="128" tileheight="128" infinite="0" nextlayerid="9" nextobjectid="1">
+ <editorsettings>
+  <export target="BounceMap.json" format="json"/>
+ </editorsettings>
+ <tileset firstgid="1" source="Ground.tsx"/>
+ <imagelayer id="2" name="Sky" repeatx="1">
+  <image source="tileset-resources/Foreground and Background/Village Set_Background  Sky- Layer 00.png" width="1920" height="1080"/>
+ </imagelayer>
+ <imagelayer id="3" name="Mountains" parallaxx="1.2" repeatx="1">
+  <image source="tileset-resources/Foreground and Background/Village Set_Background - Layer 01.png" width="1920" height="1080"/>
+ </imagelayer>
+ <imagelayer id="4" name="Bushes" parallaxx="1.5" repeatx="1">
+  <image source="tileset-resources/Foreground and Background/Village Set_Background - Layer 03.png" width="1920" height="1080"/>
+ </imagelayer>
+ <layer id="1" name="Ground" width="15" height="8">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+12,2,2,10,11,12,2,2,2,10,11,11,11,12,10
+</data>
+ </layer>
+</map>
