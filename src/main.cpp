@@ -4,169 +4,184 @@
 #define RAYLIB_TILESON_IMPLEMENTATION
 #include "raylib-tileson.hpp"
 
-struct InitParams
+typedef struct
 {
-    Vector2 ballPosition{};
-    Vector2 ballSpeed{};
-    int ballRadius{};
-    bool isPaused{};
-    int framesCounter{};
-};
+    Vector2 position{};
+    Vector2 speed{};
+    Vector2 size{};
+    float jump_height;
+} Player;
 
-/*
-Initializes the window as well  as basic start parameters for the game
-*/
-InitParams init(float groundY)
+// BoiundingBox shoudl probably be scoped to a namespace
+typedef struct
 {
-    const int screenWidth{1920};
-    const int screenHeight{1080};
+    int left;
+    int right;
+    int top;
+    int bottom;
+    int height;
+    int width;
+} BoundingBoxCustom;
 
-    SetConfigFlags(FLAG_MSAA_4X_HINT); // Anti Aliasing to Smooth Edges
-    InitWindow(screenWidth, screenHeight, "Bounce");
-
-    int ballRadius{20};
-    Vector2 ballPosition{GetScreenWidth() / 2.0f, groundY};
-    Vector2 ballSpeed{5.0f, 4.0f};
-
-    bool isPaused{false};
-    int framesCounter{0};
-
-    SetTargetFPS(60); // Sets the game to 60fps
-
-    return {
-        .framesCounter = framesCounter,
-        .isPaused = isPaused,
-        .ballPosition = ballPosition, // This is a reference to the vec2D
-        .ballSpeed = ballSpeed,
-        .ballRadius = ballRadius};
-}
-
-int main(void)
+BoundingBoxCustom determine_ground_bounding_box(Map *map)
 {
-
-    const int screenWidth{1920};
-    const int screenHeight{1080};
-
-    SetConfigFlags(FLAG_MSAA_4X_HINT); // Anti Aliasing to Smooth Edges
-    InitWindow(screenWidth, screenHeight, "Bounce");
-
-    bool isPaused{false};
-    int framesCounter{0};
-
-    SetTargetFPS(60); // Sets the game to 60fps
-
-    Map map = LoadTiled(ASSETS_PATH "maps/BounceMap.json");
-
-    if (!IsTiledReady(map))
-    {
-        return 1;
-    }
-
     // Define the bounding box coordinates
-    int minX = std::numeric_limits<int>::max();
-    int minY = std::numeric_limits<int>::max();
-    int maxX = std::numeric_limits<int>::min();
-    int maxY = std::numeric_limits<int>::min();
+    int left = std::numeric_limits<int>::max();
+    int top = std::numeric_limits<int>::max();
+    int right = std::numeric_limits<int>::min();
+    int bottom = std::numeric_limits<int>::min();
+    int tileWidth{0};
+    int tileHeight{0};
 
     // Adjust this layer name or condition as per your map design
-    std::string groundLayerName = "Ground";
+    std::string groundLayerName{"Ground"};
 
     // Iterate through the map layers to find the ground layer
-    for (auto &layer : map.data->map->getLayers())
+    for (auto &layer : map->data->map->getLayers())
     {
         if (layer.getType() == tson::LayerType::TileLayer && layer.getName() == groundLayerName)
         {
-            // Iterate over the tiles in the tile layer
-            for (const auto &[pos, tileObject] : layer.getTileObjects())
+
+            const auto tile{layer.getTileObjects().begin()};
+            const std::tuple<int, int> position{tile->first};
+            const tson::TileObject tileObject{tile->second};
+
+            if (const_cast<tson::TileObject &>(tileObject).getTile())
             {
-                if (const_cast<tson::TileObject &>(tileObject).getTile())
-                { // Check if there's an actual tile
-                    // Extract the tuple into x and y
-                    int tilePosX = std::get<0>(pos);
-                    int tilePosY = std::get<1>(pos);
+                // Extract the tuple into x and y
+                int tilePosX = std::get<0>(position);
+                int tilePosY = std::get<1>(position);
 
-                    // Calculate tile's world position
-                    int worldX = tilePosX * map.data->map->getTileSize().x;
-                    int worldY = tilePosY * map.data->map->getTileSize().y;
+                // get width and height of the tile
+                tileWidth = (map->data->map->getTileSize().x);
+                tileHeight = (map->data->map->getTileSize().y);
 
-                    // Update the bounding box coordinates
-                    minX = std::min(minX, worldX);
-                    minY = std::min(minY, worldY);
-                    maxX = std::max(maxX, worldX + map.data->map->getTileSize().x);
-                    maxY = std::max(maxY, worldY + map.data->map->getTileSize().y);
-                }
+                // Calculate tile's world position
+                int worldX = tilePosX * tileWidth;
+                int worldY = tilePosY * tileHeight;
+
+                // Update the bounding box coordinates
+                left = std::min(left, worldX);
+                top = std::min(top, worldY);
+                right = std::max(right, worldX + tileWidth);
+                bottom = std::max(bottom, worldY + tileHeight);
             }
         }
     }
 
     // Output the bounding box
-    if (minX <= maxX && minY <= maxY)
+    // TODO: clean this up
+    if (left <= right && top <= bottom)
     {
         std::cout << "Ground Bounding Box:" << std::endl;
-        std::cout << "Min X: " << minX << ", Min Y: " << minY << std::endl;
-        std::cout << "Max X: " << maxX << ", Max Y: " << maxY << std::endl;
-        std::cout << "Width: " << (maxX - minX) << ", Height: " << (maxY - minY) << std::endl;
+        std::cout << "Left: " << left << ", Right: " << right << std::endl;
+        std::cout << "Top: " << top << ", bottom: " << bottom << std::endl;
+        std::cout << "Width: " << tileWidth << ", Height: " << tileHeight << std::endl;
     }
     else
     {
         std::cout << "No ground tiles found." << std::endl;
     }
 
-    // Initialization
-    //---------------------------------------------------------
-    int ballRadius{20};
-    Vector2 ballPosition{GetScreenWidth() / 2.0f, static_cast<float>(minY)};
-    Vector2 ballSpeed{5.0f, 4.0f};
-    // InitParams initValues{init(static_cast<float>(minY))};
-    //----------------------------------------------------------
+    return {
+        .left = left,
+        .right = right,
+        .top = top,
+        .bottom = bottom,
+        .width = tileWidth,
+        .height = tileHeight};
+}
+
+/*
+Initializes the window as well  as basic start parameters for the game
+*/
+void init_screen()
+{
+    const int screenWidth{1920};
+    const int screenHeight{1080};
+
+    SetConfigFlags(FLAG_MSAA_4X_HINT); // Anti Aliasing to Smooth Edges
+    InitWindow(screenWidth, screenHeight, "Bounce");
+
+    SetTargetFPS(120); // TODO: properly use delta time for jumps
+}
+
+int main(void)
+{
+
+    // ========== Init the screen ==================
+    init_screen();
+
+    bool isPaused{false};
+    int framesCounter{0};
+
+    Map map = LoadTiled(ASSETS_PATH "maps/BounceMap.json");
+
+    if (!IsTiledReady(map))
+    {
+        std::cerr << "Could not load the map, maybe check the filepath" << std::endl;
+        return 1;
+    }
+
+    // ======== Find the Floor ============================
+
+    BoundingBoxCustom ground{determine_ground_bounding_box(&map)};
+
+    // ============Init the player ====================
+    Player player{
+        .size = {ground.width * 0.5f, ground.height * 0.9f},
+        .position = {ground.width * 2.0f, ground.top - ground.height * 0.9f},
+        .speed = {ground.width * 0.5f, ground.width * 0.2f},
+        .jump_height = (static_cast<float>(GetScreenHeight()) - 4.0f * ground.height)};
+    //===================================================
+
     bool isRising{false};
     bool isFalling{false};
-    bool isOnGround{(ballPosition.y == static_cast<float>(minY))};
+    bool isOnGround{(player.position.y == ground.top - player.size.y)};
 
     // Main game loop
     while (!WindowShouldClose()) // Detect window close button or ESC key
     {
 
-        // input
-        //-----------------------------------------------------
+        // ================== Player Input ====================
         if ((IsKeyDown(KEY_UP) || IsKeyDown(KEY_SPACE)) && isOnGround)
         {
             isRising = true;
             isOnGround = false;
         }
 
-        // Update
-        // -------------------------------------------------------
-        float deltaTime = GetFrameTime();
+        // ============== Sate Update ========================
+        float delta_time = GetFrameTime();
 
         // Checks to see if we haven't reached the max jump height
         // TODO: refactor the check for max height
-        if (isRising && (ballPosition.y > (GetScreenHeight() - 4 * ballRadius - 20.0f * ballSpeed.y)))
+        if (isRising && (player.position.y > player.jump_height))
         {
-            ballPosition.y -= (0.5 * ballSpeed.y * (pow(100 * deltaTime, 2)));
+            player.position.y -= player.speed.y * (20.0f * delta_time);
         }
 
-        if (isRising && (ballPosition.y <= (GetScreenHeight() - 4 * ballRadius - 20.0f * ballSpeed.y)))
+        if (isRising && (player.position.y <= player.jump_height))
         {
             isRising = false;
             isFalling = true;
         }
 
-        if (isFalling && (ballPosition.y < static_cast<float>(minY)))
+        if (isFalling && (player.position.y < ground.top - player.size.y))
         {
-            ballPosition.y += (0.5 * ballSpeed.y * (pow(100 * deltaTime, 2)));
+            player.position.y += player.speed.y * (20.0f * delta_time);
         }
 
-        if (isFalling && (ballPosition.y >= static_cast<float>(minY)))
+        // should probably check the bottom of the balll
+        if (isFalling && (player.position.y >= ground.top - player.size.y))
         {
             isFalling = false;
             isOnGround = true;
         }
 
-        //-----------------------------------------------------
+        //===================================================
 
-        // Draw
-        //-----------------------------------------------------
+        //====================== Draw =============================
+
         BeginDrawing();
 
         ClearBackground(RAYWHITE);
@@ -174,18 +189,23 @@ int main(void)
         // Draw the map
         DrawTiled(map, 0, 0, WHITE);
 
-        DrawCircleV(ballPosition, (float)ballRadius, MAROON);
+        DrawRectangleV(player.position, player.size, MAROON);
 
         DrawFPS(10, 10);
 
         EndDrawing();
-        //-----------------------------------------------------
+        //===================================================
     }
 
     // De-Initialization
     //---------------------------------------------------------
     UnloadMap(map);
     CloseWindow(); // Close window and OpenGL context
-    //------------------
+    //===================================================
     return 0;
 }
+
+// TODO: create a header file and move these utility functions elsewhere
+// TODO; implement bush sprites 
+// TODO: implement collision with bush
+// TODO: scoring system
