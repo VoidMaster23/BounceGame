@@ -24,7 +24,7 @@ FetchContent_Declare(
 set(BUILD_RAYLIB_TILESON_EXAMPLE OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(
     raylib-tileson
-    GIT_REPOSITORY "https://github.com/robloach/raylib-tileson.git"
+    GIT_REPOSITORY "https://github.com/VoidMaster23/raylib-tileson.git"
     GIT_TAG "master"
     GIT_PROGRESS TRUE
 )
